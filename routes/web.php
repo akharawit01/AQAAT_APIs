@@ -13,9 +13,19 @@
 |
 */
 
-$router->get('/', function () use ($router) {
-    return $router->app->version();
+
+
+$router->group(['prefix' => 'api'], function () use ($router) {
+
+    $router->get('/', function () use ($router) {
+        return $router->app->version();
+    });
+
+
+    $router->get('/aqis', 'Controller@get');
+
+    $router->get('/aqis/ids', 'Controller@getSensorId');
+    $router->get('/aqis/sensors', 'Controller@getSensor');
+    $router->get('/aqis/sensors/sort', 'Controller@getSensorSort');
+    // $router->get('/aqis/sensors/report', 'Controller@report');
 });
-
-
-$router->get('/aqis', 'Controller@get');

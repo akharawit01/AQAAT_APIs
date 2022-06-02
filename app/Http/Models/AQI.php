@@ -7,4 +7,5 @@ use Jenssegers\Mongodb\Eloquent\Model;
 class AQI extends Model
 {
     protected $collection = 'aqicollections';
+    protected $dates = ['timestamp'];
 }
