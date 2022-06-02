@@ -160,84 +160,63 @@ class Controller extends BaseController
         return $aqi;
     }
 
-    // public function report(Request $request)
-    // {
+    public function report(Request $request)
+    {
 
-    //     \DB::connection('mongodb')->enableQueryLog();
-    //     $validator = Validator::make($request->all(), [
-    //         'start_at' => 'required',
-    //         'end_at' => 'required',
-    //         'sensordid' => 'required',
-    //         'type' => 'required|in:hour,day,month',
-    //     ]);
+        \DB::connection('mongodb')->enableQueryLog();
+        $validator = Validator::make($request->all(), [
+            'start_at' => 'required',
+            'end_at' => 'required',
+            'sensordid' => 'required',
+            'type' => 'required|in:hour,day,month',
+        ]);
 
-    //     if ($validator->fails()) {
-    //         return response($validator->messages());
-    //     }
-    //     // dd($request->all());
+        if ($validator->fails()) {
+            return response($validator->messages());
+        }
 
-    //     // $start = Carbon::createFromDate(2022, 02, 17);
+        $aqi = AQI::raw(function ($collection) use ($request) {
 
-    //     // $data = AQI::where('timestamp', '>=', new DateTime($request->start_at))
-    //     //     ->where('sensorid', $request->sensordid)->get();
+            $formatType = ['hour' => '%Y%m%d%H', 'day' => '%Y%m%d', 'month' => '%Y%m'];
 
-    //     // dd(\DB::connection('mongodb')->getQueryLog(), $data);
-
-    //     // return $data;
-
-    //     $aqi = AQI::raw(function ($collection) use ($request) {
-
-    //         $formatType = ['hour' => '%Y%m%d%H', 'day' => '%Y%m%d', 'month' => '%Y%m'];
-
-    //         // $startPhpDate = new DateTime('now');
-    //         // $endPhpDate = new DateTime('2022-03-25 23:59:00.0');
-    //         // $start = new \MongoDB\BSON\UTCDateTime($startPhpDate->getTimestamp());
-    //         // $end = new \MongoDB\BSON\UTCDateTime($endPhpDate->getTimestamp());
-    //         // dd(date(DATE_ISO8601, strtotime('2010-12-30 23:21:46')));
-    //         // dd($start->toDateTime(), $end->toDateTime(), $startPhpDate);
-
-    //         // $start = date(DATE_ISO8601, strtotime('2022-02-17 00:00:00'));
-    //         // $end = date(DATE_ISO8601, strtotime('2022-03-25 23:59:00'));
-    //         // $start = new DateTime('2022-02-17 00:00:00');
-    //         $start = Carbon::createFromDate(2022, 02, 17);
-    //         // $end = new DateTime('2022-03-25 23:59:00');
-    //         // dd($start, $end);
-    //         return $collection->aggregate([
-    //             ['$match' =>
-    //             [
-    //                 // 'sensorid' => ['$in' => [$request->sensordid]],
-    //                 'timestamp' => ['$gte' => ['$date' => ['$numberLong' => "1648166400000"]]],
-    //                 // '$and' => [
-    //                 //     ['timestamp' => ['$gte' => $start]],
-    //                 //     ['timestamp' => ['$lt' => $end]]
-    //                 // ]
-    //             ]]
-    //             // [
-    //             //     '$group' =>
-    //             //     [
-    //             //         '_id' => ['$dateToString' => ['format' => $formatType[$request->type], 'date' => '$timestamp']],
-    //             //         'count' => ['$sum' => 1],
-    //             //         'pm01' => ['$avg' =>  '$pm01'],
-    //             //         'pm02' => ['$avg' =>  '$pm02'],
-    //             //         'pm10' => ['$avg' =>  '$pm10'],
-    //             //         'rco2' => ['$avg' =>  '$rco2'],
-    //             //         'atmp' => ['$avg' =>  '$atmp'],
-    //             //         'rhum' => ['$avg' =>  '$rhum'],
-    //             //         'wifi' => ['$avg' =>  '$wifi'],
-    //             //         'tvoc' => ['$avg' =>  '$tvoc'],
-    //             //         'timestamp' => ['$first' => '$timestamp']
-    //             //     ]
-    //             // ],
-    //             // [
-    //             //     '$addFields' => [
-    //             //         'data.timestamp' => [
-    //             //             '$toString' => '$data.timestamp'
-    //             //         ],
-    //             //     ]
-    //             // ],
-    //         ]);
-    //     });
-    //     dd(\DB::connection('mongodb')->getQueryLog(), $aqi);
-    //     return $aqi;
-    // }
+            $startDate = Carbon::parse($request->start_at);
+            $endDate = Carbon::parse($request->end_at);
+            $start = new \MongoDB\BSON\UTCDateTime($startDate->timestamp * 1000);
+            $end = new \MongoDB\BSON\UTCDateTime($endDate->timestamp * 1000);
+            return $collection->aggregate([
+                ['$match' =>
+                [
+                    'sensorid' => ['$in' => [$request->sensordid]],
+                    '$and' => [
+                        ['timestamp' => ['$gte' => $start]],
+                        ['timestamp' => ['$lt' => $end]]
+                    ]
+                ]],
+                [
+                    '$group' =>
+                    [
+                        '_id' => ['$dateToString' => ['format' => $formatType[$request->type], 'date' => '$timestamp']],
+                        'count' => ['$sum' => 1],
+                        'pm01' => ['$avg' =>  '$pm01'],
+                        'pm02' => ['$avg' =>  '$pm02'],
+                        'pm10' => ['$avg' =>  '$pm10'],
+                        'rco2' => ['$avg' =>  '$rco2'],
+                        'atmp' => ['$avg' =>  '$atmp'],
+                        'rhum' => ['$avg' =>  '$rhum'],
+                        'wifi' => ['$avg' =>  '$wifi'],
+                        'tvoc' => ['$avg' =>  '$tvoc'],
+                        'timestamp' => ['$first' => '$timestamp']
+                    ]
+                ],
+                [
+                    '$addFields' => [
+                        'data.timestamp' => [
+                            '$toString' => '$data.timestamp'
+                        ],
+                    ]
+                ],
+            ]);
+        });
+        return $aqi;
+    }
 }
