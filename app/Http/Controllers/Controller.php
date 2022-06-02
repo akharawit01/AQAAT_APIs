@@ -208,13 +208,6 @@ class Controller extends BaseController
                         'timestamp' => ['$first' => '$timestamp']
                     ]
                 ],
-                [
-                    '$addFields' => [
-                        'data.timestamp' => [
-                            '$toString' => '$data.timestamp'
-                        ],
-                    ]
-                ],
             ]);
         });
         return $aqi;
