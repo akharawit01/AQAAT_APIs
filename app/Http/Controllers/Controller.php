@@ -169,6 +169,8 @@ class Controller extends BaseController
             'end_at' => 'required',
             'sensordid' => 'required',
             'type' => 'required|in:hour,day,month',
+            'skip' => 'required',
+            'limit' => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -183,6 +185,9 @@ class Controller extends BaseController
             $endDate = Carbon::parse($request->end_at);
             $start = new \MongoDB\BSON\UTCDateTime($startDate->timestamp * 1000);
             $end = new \MongoDB\BSON\UTCDateTime($endDate->timestamp * 1000);
+
+            $_skip = (int)$request->skip;
+            $_limit = (int)$request->limit;
             return $collection->aggregate([
                 ['$match' =>
                 [
@@ -208,6 +213,12 @@ class Controller extends BaseController
                         'timestamp' => ['$first' => '$timestamp']
                     ]
                 ],
+                [
+                    '$facet' => [
+                        'metadata' => [[ '$count' => 'total' ]],
+                        'data' => [[ '$skip' => $_skip ], [ '$limit' => $_limit ]]
+                    ]
+                ]
             ]);
         });
         return $aqi;
