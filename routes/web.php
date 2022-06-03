@@ -22,8 +22,6 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     });
 
 
-    $router->get('/aqis', 'Controller@get');
-
     $router->get('/aqis/ids', 'Controller@getSensorId');
     $router->get('/aqis/sensors', 'Controller@getSensor');
     $router->get('/aqis/sensors/sort', 'Controller@getSensorSort');

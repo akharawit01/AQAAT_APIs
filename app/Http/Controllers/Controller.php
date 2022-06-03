@@ -20,47 +20,19 @@ class Controller extends BaseController
 {
     /**
      * @OA\Get(
-     *     path='/aqis',
-     *     summary='Finds Pets by status',
-     *     description='Multiple status values can be provided with comma separated string',
-     *     operationId='findPetsByStatus',
-     *     deprecated=true,
-     *     @OA\Parameter(
-     *         name='status',
-     *         in='query',
-     *         description='Status values that needed to be considered for filter',
-     *         required=true,
-     *         explode=true,
-     *         @OA\Schema(
-     *             default='available',
-     *             type='string',
-     *             enum = {'available', 'pending', 'sold'},
-     *         )
-     *     ),
+     *     path='/aqis/ids',
+     *     summary='Get list all sensorID',
+     *     description='Get all list for sensorId in the database',
      *     @OA\Response(
      *         response=200,
      *         description='successful operation',
      *         @OA\JsonContent(
      *             type='array',
+     *             @OA\Items(ref="#/components/schemas/SensorId")
      *         ),
-     *         @OA\XmlContent(
-     *             type='array',
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=400,
-     *         description='Invalid status value'
      *     ),
      * )
      */
-
-    public function get()
-    {
-        $aqi = AQI::raw(function ($collection) {
-            return $collection->aggregate([['$group' => ['_id' => '$sensorid']]]);
-        });
-        return $aqi;
-    }
 
     public function getSensorId()
     {
@@ -163,7 +135,6 @@ class Controller extends BaseController
     public function report(Request $request)
     {
 
-        \DB::connection('mongodb')->enableQueryLog();
         $validator = Validator::make($request->all(), [
             'start_at' => 'required',
             'end_at' => 'required',
@@ -185,6 +156,7 @@ class Controller extends BaseController
             $endDate = Carbon::parse($request->end_at);
             $start = new \MongoDB\BSON\UTCDateTime($startDate->timestamp * 1000);
             $end = new \MongoDB\BSON\UTCDateTime($endDate->timestamp * 1000);
+
 
             $_skip = (int)$request->skip;
             $_limit = (int)$request->limit;
@@ -213,10 +185,18 @@ class Controller extends BaseController
                         'timestamp' => ['$first' => '$timestamp']
                     ]
                 ],
+                ['$sort' => ['timestamp' => 1]],
+                [
+                    '$addFields' => [
+                        'timestamp' => [
+                            '$toString' => '$timestamp'
+                        ],
+                    ]
+                ],
                 [
                     '$facet' => [
-                        'metadata' => [[ '$count' => 'total' ]],
-                        'data' => [[ '$skip' => $_skip ], [ '$limit' => $_limit ]]
+                        'metadata' => [['$count' => 'total']],
+                        'data' => [['$skip' => $_skip], ['$limit' => $_limit]]
                     ]
                 ]
             ]);
