@@ -14,7 +14,6 @@
 */
 
 
-
 $router->group(['prefix' => 'api'], function () use ($router) {
 
     $router->get('/', function () use ($router) {
@@ -25,5 +24,6 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('/aqis/ids', 'Controller@getSensorId');
     $router->get('/aqis/sensors', 'Controller@getSensor');
     $router->get('/aqis/sensors/sort', 'Controller@getSensorSort');
+    $router->get('/aqis/sensors/sortByDate', 'Controller@getSensorSortByDate');
     $router->get('/aqis/sensors/report', 'Controller@report');
 });

@@ -132,6 +132,69 @@ class Controller extends BaseController
         return $aqi;
     }
 
+    public function getSensorSortByDate(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'start_at' => 'required',
+            'end_at' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return response($validator->messages());
+        }
+
+        $sortKey = $request->get('sort', 'pm01');
+
+        $aqi = AQI::raw(function ($collection) use ($sortKey, $request) {
+
+            $startDate = Carbon::parse($request->start_at);
+            $endDate = Carbon::parse($request->end_at);
+            $start = new \MongoDB\BSON\UTCDateTime($startDate->timestamp * 1000);
+            $end = new \MongoDB\BSON\UTCDateTime($endDate->timestamp * 1000);
+
+            return $collection->aggregate([
+                ['$match' =>
+                    [
+                        '$and' => [
+                            ['timestamp' => ['$gte' => $start]],
+                            ['timestamp' => ['$lt' => $end]]
+                        ]
+                    ]
+                ],
+                ['$sort' => ['timestamp' => -1]],
+                [
+                    '$group' =>
+                    [
+                        '_id' => '$sensorid',
+                        'count' => ['$sum' => 1],
+                        'pm01' => ['$avg' =>  '$pm01'],
+                        'pm02' => ['$avg' =>  '$pm02'],
+                        'pm10' => ['$avg' =>  '$pm10'],
+                        'rco2' => ['$avg' =>  '$rco2'],
+                        'atmp' => ['$avg' =>  '$atmp'],
+                        'rhum' => ['$avg' =>  '$rhum'],
+                        'wifi' => ['$avg' =>  '$wifi'],
+                        'tvoc' => ['$avg' =>  '$tvoc'],
+                        'timestamp' => ['$first' => '$timestamp']
+                    ]
+                ],
+                [
+                    '$addFields' => [
+                        'timestamp' => [
+                            '$toString' => '$timestamp'
+                        ],
+                    ]
+                ],
+                [
+                    '$sort' => [
+                        $sortKey => -1
+                    ]
+                ]
+            ]);
+        });
+        return $aqi;
+    }
+
     public function report(Request $request)
     {
 
