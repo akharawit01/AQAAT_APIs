@@ -87,7 +87,6 @@ class Controller extends BaseController
 
     public function getSensorSort(Request $request)
     {
-
         $sortKey = $request->get('sort', 'pm01');
         $aqi = AQI::raw(function ($collection) use ($sortKey) {
             return $collection->aggregate([
@@ -137,6 +136,7 @@ class Controller extends BaseController
         $validator = Validator::make($request->all(), [
             'start_at' => 'required',
             'end_at' => 'required',
+            'sort_type' => 'required|in:asc,desc',
         ]);
 
         if ($validator->fails()) {
@@ -144,8 +144,13 @@ class Controller extends BaseController
         }
 
         $sortKey = $request->get('sort', 'pm01');
+        $sortType = 1;
 
-        $aqi = AQI::raw(function ($collection) use ($sortKey, $request) {
+        if ($request->get('sort_type') === 'desc') {
+            $sortType  = -1;
+        }
+        
+        $aqi = AQI::raw(function ($collection) use ($sortKey, $sortType, $request) {
 
             $startDate = Carbon::parse($request->start_at);
             $endDate = Carbon::parse($request->end_at);
@@ -161,7 +166,6 @@ class Controller extends BaseController
                         ]
                     ]
                 ],
-                ['$sort' => ['timestamp' => -1]],
                 [
                     '$group' =>
                     [
@@ -187,7 +191,7 @@ class Controller extends BaseController
                 ],
                 [
                     '$sort' => [
-                        $sortKey => -1
+                        $sortKey => $sortType
                     ]
                 ]
             ]);
@@ -197,7 +201,6 @@ class Controller extends BaseController
 
     public function report(Request $request)
     {
-
         $validator = Validator::make($request->all(), [
             'start_at' => 'required',
             'end_at' => 'required',
