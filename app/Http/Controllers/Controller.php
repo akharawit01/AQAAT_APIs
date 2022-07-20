@@ -37,7 +37,7 @@ class Controller extends BaseController
     public function getSensorId()
     {
         $aqi = AQI::raw(function ($collection) {
-            return $collection->aggregate([['$group' => ['_id' => '$sensorid']], ['$addFields' => ['id' => '$_id']], ['$project' => ['_id' => 0]]]);
+            return $collection->aggregate([['$group' => ['_id' => '$sensorid']], ['$addFields' => ['id' => '$_id']], ['$project' => ['_id' => 0]]], ['allowDiskUse' => true]);
         });
         return $aqi;
     }
@@ -80,7 +80,7 @@ class Controller extends BaseController
                         'data.timestamp' => 1,
                     ]
                 ]
-            ]);
+            ], ['allowDiskUse' => true]);
         });
         return $aqi;
     }
@@ -126,7 +126,7 @@ class Controller extends BaseController
                         'data.' . $sortKey => -1
                     ]
                 ]
-            ]);
+            ], ['allowDiskUse' => true]);
         });
         return $aqi;
     }
@@ -149,7 +149,7 @@ class Controller extends BaseController
         if ($request->get('sort_type') === 'desc') {
             $sortType  = -1;
         }
-        
+
         $aqi = AQI::raw(function ($collection) use ($sortKey, $sortType, $request) {
 
             $startDate = Carbon::parse($request->start_at);
@@ -158,7 +158,8 @@ class Controller extends BaseController
             $end = new \MongoDB\BSON\UTCDateTime($endDate->timestamp * 1000);
 
             return $collection->aggregate([
-                ['$match' =>
+                [
+                    '$match' =>
                     [
                         '$and' => [
                             ['timestamp' => ['$gte' => $start]],
@@ -194,7 +195,7 @@ class Controller extends BaseController
                         $sortKey => $sortType
                     ]
                 ]
-            ]);
+            ], ['allowDiskUse' => true]);
         });
         return $aqi;
     }
