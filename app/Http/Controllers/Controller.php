@@ -52,6 +52,7 @@ class Controller extends BaseController
                     [
                         '_id' => '$sensorid',
                         'count' => ['$sum' => 1],
+                        'startTime' => ['$last' => '$timestamp'],
                         'data' => ['$first' => '$$ROOT'],
                     ]
                 ],
@@ -60,6 +61,12 @@ class Controller extends BaseController
                         'data.timestamp' => [
                             '$dateToString' => [
                                 'date' => '$data.timestamp',
+                                'format' => '%Y-%m-%d %H:00'
+                            ]
+                        ],
+                        'data.startTime' => [
+                            '$dateToString' => [
+                                'date' => '$startTime',
                                 'format' => '%Y-%m-%d %H:00'
                             ]
                         ],
@@ -77,6 +84,7 @@ class Controller extends BaseController
                         'data.rhum' => 1,
                         'data.wifi' => 1,
                         'data.tvoc' => 1,
+                        'data.startTime' => 1,
                         'data.timestamp' => 1,
                     ]
                 ]
@@ -96,6 +104,7 @@ class Controller extends BaseController
                     [
                         '_id' => '$sensorid',
                         'count' => ['$sum' => 1],
+                        'startTime' => ['$last' => '$timestamp'],
                         'data' => ['$first' => '$$ROOT'],
                     ]
                 ],
@@ -103,6 +112,9 @@ class Controller extends BaseController
                     '$addFields' => [
                         'data.timestamp' => [
                             '$toString' => '$data.timestamp'
+                        ],
+                        'data.startTime' => [
+                            '$toString' => '$startTime'
                         ],
                     ]
                 ],
@@ -118,6 +130,7 @@ class Controller extends BaseController
                         'data.rhum' => 1,
                         'data.wifi' => 1,
                         'data.tvoc' => 1,
+                        'data.startTime' => 1,
                         'data.timestamp' => 1,
                     ]
                 ],
@@ -180,13 +193,17 @@ class Controller extends BaseController
                         'rhum' => ['$avg' =>  '$rhum'],
                         'wifi' => ['$avg' =>  '$wifi'],
                         'tvoc' => ['$avg' =>  '$tvoc'],
-                        'timestamp' => ['$first' => '$timestamp']
+                        'timestamp' => ['$first' => '$timestamp'],
+                        'startTime' => ['$last' => '$timestamp']
                     ]
                 ],
                 [
                     '$addFields' => [
                         'timestamp' => [
                             '$toString' => '$timestamp'
+                        ],
+                        'startTime' => [
+                            '$toString' => '$startTime'
                         ],
                     ]
                 ],
