@@ -193,8 +193,8 @@ class Controller extends BaseController
                         'rhum' => ['$avg' =>  '$rhum'],
                         'wifi' => ['$avg' =>  '$wifi'],
                         'tvoc' => ['$avg' =>  '$tvoc'],
-                        'timestamp' => ['$first' => '$timestamp'],
-                        'startTime' => ['$last' => '$timestamp']
+                        'startTime' => ['$first' => '$timestamp'],
+                        'timestamp' => ['$last' => '$timestamp']
                     ]
                 ],
                 [
